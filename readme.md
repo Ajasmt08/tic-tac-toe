@@ -21,9 +21,7 @@ Bonus: There's room for an **Online Multiplayer Mode**, which will be added in f
 
 ## 🚀 Demo
 
-🌐 **Live Demo**: [Add Hosted Link Here]
-
-💻 **GitHub Repo**: [Add GitHub Link Here]
+🌐 **Live Demo**: https://tic-tac-toe-av0.pages.dev/
 
 ## 🛠️ Installation
 
@@ -53,7 +51,8 @@ The bot makes random moves to keep things unpredictable, making the gameplay fun
 - **Tailwind CSS**: For styling and responsive design
 - **HTML5/CSS3**: Core structure and layout
 - **JavaScript**: Game logic and animations
-
+- **Font Awesome**: For Icons
+- 
 ## 🛠️ Future Enhancements
 
 - 🌐 **Online Multiplayer Mode**: Play with friends over the internet
@@ -63,9 +62,5 @@ The bot makes random moves to keep things unpredictable, making the gameplay fun
 ## 🙌 Feedback & Contributions
 
 I'd love to hear your thoughts or suggestions to make this app even better! Feel free to open an issue or submit a pull request.
-
-## 📜 License
-
-This project is licensed under the MIT License.
 
 Happy playing! 🎮
