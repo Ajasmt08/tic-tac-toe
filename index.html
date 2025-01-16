@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Outfit', sans-serif; } 
+        [v-cloak] { display: none; }
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px); /* Adjust the distance as per your requirement */
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-float {
+            animation: float 2s ease-in-out infinite; /* The 2s is the duration, adjust as needed */
+        }
+        @keyframes fly-back-forth {
+            0% { transform: rotate(0deg) translate(0px) rotate(0deg); }
+            25% { transform: rotate(260deg) translate(300px) rotate(-260deg); }
+            50% { transform: rotate(260deg) translate(500px) rotate(-deg); }
+            75% { transform: rotate(260deg) translate(1000px) rotate(-360deg); }
+            100% { transform: rotate(0deg) translate(0px) rotate(-360deg); }
+        }
+
+        @keyframes rotate-circle {
+            0% { transform: rotate(0deg) translate(500px) rotate(0deg); }
+            100% { transform: rotate(360deg) translate(500px) rotate(-360deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .paper-plane {
+            animation: fly-back-forth 20s ease-in-out infinite;
+        }
+
+        .saturn {
+            animation: rotate-circle 10s linear infinite;
+        }
+
+        .earth {
+            animation: bounce 10s ease-in-out infinite;
+        }
+
+    </style>
+    <style scoped>
+        .menu,.game,#app,.game-over-pop-up,.thinking-overlay{
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        </style>
+</head>
+<body class="bg-[url('/res/img/9852449.jpg')] bg-cover bg-no-repeat bg-bottom relative overflow-hidden" style="background-repeat: repeat;height:900px;">
+    <div class="header">
+        <h1 class="text-center text-4xl text-slate-900 md:py-8 py-4 text-4xl shadow-2xl bg-white">Tic Tac Toe</h1>
+    </div>
+    <div id="app" class="app mx-2">
+        <!-- Main Menu -->
+        <div
+        v-if="!mainMenu"
+        class="menu flex flex-col items-center bg-white text-black shadow-2xl p-2 transform transition max-w-4xl w-full m-auto mt-20 py-10">
+        <h1 class="text-4xl font-bold mb-8">Tic Tac Toe</h1>
+        <!-- Responsive container -->
+            <div
+                class="w-full max-w-md flex flex-col md:grid md:grid-cols-3 gap-4">
+                <!-- Button for 1v1 -->
+                <button
+                    class="flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out h-24 w-full md:w-32 animate-float"
+                    @click="playGame(1)"
+                    style="animation-delay: 0s;"
+                    >
+                <i class="fa-solid fa-users text-2xl mb-2"></i>
+                <span class="text-sm font-medium">1 v 1</span>
+                </button>
+                <!-- Button for 1 v Computer -->
+                <button
+                    class="flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out h-24 w-full md:w-32 animate-float"
+                    @click="playGame(2)"
+                    style="animation-delay: 0.5s;"
+                    >
+                <i class="fa-solid fa-robot text-2xl mb-2"></i>
+                <span class="text-sm font-medium">1 v Computer</span>
+                </button>
+                <!-- Coming Soon Button -->
+                <button
+                    class="opacity-50 flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out h-24 w-full md:w-32 animate-float"
+                    style="animation-delay: 1s;"
+                    >
+                <i class="fa-solid fa-globe text-2xl mb-2"></i>
+                <span class="text-sm font-medium">Online <br>(Coming Soon)</span>
+                </button>
+            </div>
+        </div>
+        <!-- Game -->
+        <div v-if="mainMenu" class="game bg-white md:p-14 px-2 py-4 rounded-xl shadow-2xl transform transition max-w-xl w-full m-auto mt-10">
+            <h1 class="text-2xl font-bold text-center text-gray-700">
+                <span v-if="gameType==1">
+                    {{ currentPlayer == 'X' ? 'O' : 'X' }}'s Turn
+                </span>
+                <span v-else >
+                    {{ currentPlayer == 'X' ? 'Computer\'s' : 'Your' }} Turn
+                </span>
+            </h1>   
+            <div v-if="winnerMessage" class="game-over-pop-up fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50 text-center">
+                <!-- Game over pop up -->
+                <div class="relative bg-white p-8 px-32 rounded-lg shadow-lg">
+                    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+                        {{ winnerMessage }}
+                    </h1>
+                    <button 
+                        @click="newGame" 
+                        class="flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out h-24 w-32 m-auto">
+                        <i class="fa-solid fa-play text-2xl mb-2"></i>
+                        <span class="text-sm font-medium">New Game</span>
+                    </button>
+                </div>
+            </div>
+            <div 
+                v-if="isComputerThinking" 
+                class="thinking-overlay fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50 text-center">
+                <div class="text-white text-5xl">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <p class="mt-4 text-xl">Thinking...</p>
+                </div>
+            </div>
+        
+            <div class="grid grid-cols-3 m-6 gap-3 bg-gray-300 rounded-3xl filter grayscale">
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-tl-2xl rounded-br-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="00"> 
+                    <div :class="matrixVisible[0][0] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[0][0] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-bl-2xl rounded-br-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="01"> 
+                    <div :class="matrixVisible[0][1] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[0][1] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-tr-2xl rounded-bl-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="02"> 
+                    <div :class="matrixVisible[0][2] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[0][2] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-br-2xl rounded-tr-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="10"> 
+                    <div :class="matrixVisible[1][0] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[1][0] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-2xl"                   data-cell-id="11"> 
+                    <div :class="matrixVisible[1][1] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[1][1] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-bl-2xl rounded-tl-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="12"> 
+                    <div :class="matrixVisible[1][2] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[1][2] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-bl-2xl rounded-tr-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="20"> 
+                    <div :class="matrixVisible[2][0] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[2][0] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-tr-2xl rounded-tl-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="21"> 
+                    <div :class="matrixVisible[2][1] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[2][1] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+                <div @click="handlePlayerClick" class="h-[95.34px] md:h-[123px] bg-gray-200 hover:bg-gray-100 flex items-center justify-center text-2xl font-bold cursor-pointer rounded-br-2xl rounded-tl-2xl transition duration-300 ease-out hover:ease-in" data-cell-id="22"> 
+                    <div :class="matrixVisible[2][2] ? 'opacity-100' : 'opacity-0'">
+                        <i  v-if="matrix[2][2] == 'X'" class="fa fa-times text-rose-600 text-7xl" aria-hidden="true"></i> 
+                        <i  v-else class="fa-regular fa-circle text-cyan-600 text-7xl" aria-hidden="true"></i> 
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center space-x-4 mt-4 px-12 mb:p-auto">
+                <button @click="undoGame" class="flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out mb:h-24 h-20 w-32">
+                    <i class="fa-solid fa-rotate-left md:text-2xl text-sm mb-2"></i>
+                    <span class="text-sm font-medium">Undo</span>
+                </button>
+                <button @click="newGame" class="flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out mb:h-24 h-20 w-32">
+                    <i class="fa-solid fa-play md:text-2xl text-sm mb-2"></i>
+                    <span class="text-sm font-medium">New Game</span>
+                </button>
+                <button @click="gotToMainMenu" class="flex flex-col items-center justify-center bg-white text-black border border-black rounded-lg hover:bg-black hover:text-white transition duration-500 ease-in-out mb:h-24 h-20 w-32">
+                    <i class="fa-solid fa-bars md:text-2xl text-sm mb-2"></i>
+                    <span class="text-sm font-medium">Menu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Floating icons -->
+    <div class="absolute w-screen top-[80%]">
+        <div class="absolute w-20 h-20 bg-white rounded-full p-2 shadow-2xl paper-plane left-0 right-0 m-auto md:bottom-[-200px] bottom-0">
+            <img src="res/img/paper-plane.png" alt="Paper Plane" class="w-full h-full" />
+        </div>
+        <div class="absolute w-20 h-20 bg-white rounded-full p-2 shadow-2xl saturn left-0 right-0 m-auto">
+            <img src="res/img/saturn.png" alt="Saturn" class="w-full h-full" />
+        </div>
+        <div class="absolute w-28 h-28 bg-white rounded-full p-2 shadow-2xl earth left-0 right-0 m-auto md:bottom-[-200px] bottom-0">
+            <img src="res/img/worldwide.png" alt="Worldwide" class="w-full h-full" />
+        </div>
+    </div>
+</body>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                matrix : [
+                    [null, null, null],
+                    [null, null, null],
+                    [null, null, null]
+                ],
+                matrixVisible: [
+                    [false, false, false],
+                    [false, false, false],
+                    [false, false, false]
+                ],
+                currentPlayer: 'O',
+                oldMatrix :  this.matrix,
+                oldMatrixVisible : this.matrixVisible,
+                winnerMessage: '',
+                isGameActive: false,
+                mainMenu : false,
+                playCount : 0,
+                canUndo : false,
+                gameType : 0, // 1 for 1v1 and 2 for 1vComputer
+                isComputerThinking: false
+            }
+        },
+        methods: {
+            handlePlayerClick(event) {
+                var cellId = (event.currentTarget.getAttribute('data-cell-id'));
+                this.updateMatrix(cellId);
+            },
+            updateMatrix($cellId) {
+                if(this.isTie()) {
+                    this.winnerMessage = 'Game is Tie';
+                    return;
+                }
+                // Backing Up the old matrix
+                this.oldMatrix = JSON.parse(JSON.stringify(this.matrix));
+                this.oldMatrixVisible = JSON.parse(JSON.stringify(this.matrixVisible));
+                isGameActive = true; // Game is Active
+                this.canUndo = true;
+                var row = $cellId[0];
+                var col = $cellId[1];
+                if(this.matrix[row][col] == null) {
+                    this.matrix[row][col] = this.chnagePlayer();
+                    this.matrixVisible[row][col] = true;
+                    this.playCount++;
+                    console.log(row, col);
+                    console.log(JSON.stringify(this.matrix));
+                    console.log(JSON.stringify(this.matrixVisible));
+                    if(this.didWon()) {
+                        this.winnerMessage = `${this.currentPlayer == 'X' ? this.gameType==2 ? 'You ' : 'X' : 'O'} Won the Game`;
+                        return
+                    }
+                    if(this.gameType == 2) {
+                        this.playComputer();
+                    }
+                }
+            },
+            chnagePlayer() {
+                return this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
+            },
+            newGame() {
+                this.closePopup();
+                this.matrix = [
+                    [null, null, null],
+                    [null, null, null],
+                    [null, null, null]
+                ];
+                this.matrixVisible = [
+                    [false, false, false],
+                    [false, false, false],
+                    [false, false, false]
+                ];
+                this.currentPlayer = 'O';
+                this.playCount = 0;
+                this.canUndo = false;
+                isComputerThinking = false;
+            },
+            undoGame() {
+                if(!this.canUndo) return;
+                if(!isGameActive) return;
+                this.matrix = JSON.parse(JSON.stringify(this.oldMatrix));
+                this.matrixVisible = JSON.parse(JSON.stringify(this.oldMatrixVisible));
+                this.chnagePlayer();
+                this.playCount--;
+                this.canUndo = false;
+            },
+            didWon() {
+                const winConditions = [
+                    // Rows
+                    [ [0, 0], [0, 1], [0, 2] ],
+                    [ [1, 0], [1, 1], [1, 2] ],
+                    [ [2, 0], [2, 1], [2, 2] ],
+                    // Columns
+                    [ [0, 0], [1, 0], [2, 0] ],
+                    [ [0, 1], [1, 1], [2, 1] ],
+                    [ [0, 2], [1, 2], [2, 2] ],
+                    // Diagonals
+                    [ [0, 0], [1, 1], [2, 2] ],
+                    [ [0, 2], [1, 1], [2, 0] ]
+                ];
+
+                for (const condition of winConditions) {
+                    const [a, b, c] = condition;
+                    if (
+                        this.matrix[a[0]][a[1]] !== null &&
+                        this.matrix[a[0]][a[1]] === this.matrix[b[0]][b[1]] &&
+                        this.matrix[a[0]][a[1]] === this.matrix[c[0]][c[1]]
+                    ) {
+                        isGameActive = false; // Game is not Active
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+            closePopup() {
+                this.winnerMessage = ''; 
+            },
+            playGame(type) {
+                this.mainMenu = true;
+                this.gameType = type;
+                console.log('Game Type', type);
+            },
+            gotToMainMenu() {
+                this.mainMenu = false;
+                this.isGameActive = false;
+                this.newGame();
+                this.gameType = 0;
+            },
+            isTie() {
+                console.log(this.playCount);
+                return this.playCount == 8 && !this.didWon();
+            },
+            playComputer() {
+                if (this.isTie()) {
+                    this.winnerMessage = 'Game is Tie';
+                    return;
+                }
+                this.isComputerThinking = true; 
+                setTimeout(() => {
+                    console.log('Computer is Playing');
+
+                    const linesToCheck = [
+                        // Rows
+                        [[0, 0], [0, 1], [0, 2]],
+                        [[1, 0], [1, 1], [1, 2]],
+                        [[2, 0], [2, 1], [2, 2]],
+                        // Columns
+                        [[0, 0], [1, 0], [2, 0]],
+                        [[0, 1], [1, 1], [2, 1]],
+                        [[0, 2], [1, 2], [2, 2]],
+                        // Diagonals
+                        [[0, 0], [1, 1], [2, 2]],
+                        [[0, 2], [1, 1], [2, 0]]
+                    ];
+
+                    let moveMade = false;
+
+
+                    // Priority 2: Check for lines with two 'O' and one empty spot
+                    if (!moveMade) {
+                        for (let line of linesToCheck) {
+                            let count_o = 0;
+                            let emptySpot = null;
+
+                            for (let [row, col] of line) {
+                                if (this.matrix[row][col] === 'O') {
+                                    count_o++;
+                                } else if (this.matrix[row][col] === null) {
+                                    emptySpot = [row, col];
+                                }
+                            }
+
+                            if (count_o === 2 && emptySpot) {
+                                const [row, col] = emptySpot;
+                                this.matrix[row][col] = this.chnagePlayer();
+                                this.matrixVisible[row][col] = true;
+                                this.playCount++;
+                                moveMade = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Priority 1: Check for lines with two 'X' and one empty spot
+                    if (!moveMade) {
+                        for (let line of linesToCheck) {
+                            let count_x = 0;
+                            let emptySpot = null;
+
+                            for (let [row, col] of line) {
+                                if (this.matrix[row][col] === 'X') {
+                                    count_x++;
+                                } else if (this.matrix[row][col] === null) {
+                                    emptySpot = [row, col];
+                                }
+                            }
+
+                            if (count_x === 2 && emptySpot) {
+                                const [row, col] = emptySpot;
+                                this.matrix[row][col] = this.chnagePlayer();
+                                this.matrixVisible[row][col] = true;
+                                this.playCount++;
+                                moveMade = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Priority 3: Place in the middle cell if available
+                    if (!moveMade && this.matrix[1][1] === null) {
+                        this.matrix[1][1] = this.chnagePlayer();
+                        this.matrixVisible[1][1] = true;
+                        this.playCount++;
+                        moveMade = true;
+                    }
+
+                    // Priority 4: Place in the first available empty spot
+                    if (!moveMade) {
+                        const availableCells = [];
+                        for (let row = 0; row < 3; row++) {
+                            for (let col = 0; col < 3; col++) {
+                                if (this.matrix[row][col] === null) {
+                                    availableCells.push({ row, col });
+                                }
+                            }
+                        }
+
+                        if (availableCells.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * availableCells.length);
+                            const { row, col } = availableCells[randomIndex];
+                            this.matrix[row][col] = this.chnagePlayer();
+                            this.matrixVisible[row][col] = true;
+                            this.playCount++;
+                            moveMade = true;
+                        }
+                    }
+                    // Check for a winner
+                    if (this.didWon()) {
+                        this.isComputerThinking = false;
+                        this.winnerMessage = `${this.currentPlayer === 'X' ? 'You ' : 'Computer'} Won the Game`;
+                    }
+                    this.isComputerThinking = false;
+                }, 1000); 
+            }
+
+
+            
+        }
+    });
+    app.mount('#app');
+</script>
+</html>
